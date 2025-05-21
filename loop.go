@@ -208,14 +208,9 @@ func (l *loop) handleInvocationMessage(invocation invocationMessage) {
 			_ = l.hubConn.Completion(invocation.InvocationID, nil,
 				fmt.Sprintf("Stream invocation of method %s which has not return value kind channel", invocation.Target))
 		} else {
-			// hub method might take a long time
-			go func() {
-				result := func() []reflect.Value {
-					defer l.recoverInvocationPanic(invocation)
-					return method.Call(in)
-				}()
-				l.returnInvocationResult(invocation, result)
-			}()
+			result := method.Call(in)
+			l.recoverInvocationPanic(invocation)
+			l.returnInvocationResult(invocation, result)
 		}
 	}
 }
@@ -228,15 +223,12 @@ func (l *loop) returnInvocationResult(invocation invocationMessage, result []ref
 			switch invocation.Type {
 			// Simple invocation
 			case 1:
-				go func() {
-					// Recv might block, so run continue in a goroutine
-					if chanResult, ok := result[0].Recv(); ok {
-						l.sendResult(invocation, completion, []reflect.Value{chanResult})
-					} else {
+				if chanResult, ok := result[0].Recv(); ok {
+					l.sendResult(invocation, completion, []reflect.Value{chanResult})
+				} else {
 
-						_ = l.hubConn.Completion(invocation.InvocationID, nil, "hub func returned closed chan")
-					}
-				}()
+					_ = l.hubConn.Completion(invocation.InvocationID, nil, "hub func returned closed chan")
+				}
 			// StreamInvocation
 			case 4:
 				l.streamer.Start(invocation.InvocationID, result[0])
