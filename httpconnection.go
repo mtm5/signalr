@@ -68,7 +68,7 @@ func WithNegotiateVersion(version int) func(*httpConnection) error {
 // NewHTTPConnection creates a signalR HTTP Connection for usage with a Client.
 // ctx can be used to cancel the SignalR negotiation during the creation of the Connection
 // but not the Connection itself.
-func NewHTTPConnection(ctx context.Context, address string, options ...func(*httpConnection) error) (Connection, error) {
+func NewHTTPConnection(ctx context.Context, connCtx context.Context, address string, options ...func(*httpConnection) error) (Connection, error) {
 	httpConn := &httpConnection{}
 
 	for _, option := range options {
@@ -147,8 +147,7 @@ func NewHTTPConnection(ctx context.Context, address string, options ...func(*htt
 			return nil, err
 		}
 
-		// TODO think about if the API should give the possibility to cancel this connections
-		conn = newWebTransportsConnection(context.Background(), negotiateResponse.ConnectionID, wtConn)
+		conn = newWebTransportsConnection(connCtx, negotiateResponse.ConnectionID, wtConn)
 
 	case httpConn.hasTransport(TransportWebSockets) && negotiateResponse.hasTransport(TransportWebSockets):
 		wsURL := reqURL
@@ -177,8 +176,7 @@ func NewHTTPConnection(ctx context.Context, address string, options ...func(*htt
 			return nil, err
 		}
 
-		// TODO think about if the API should give the possibility to cancel this connection
-		conn = newWebSocketConnection(context.Background(), negotiateResponse.ConnectionID, ws)
+		conn = newWebSocketConnection(connCtx, negotiateResponse.ConnectionID, ws)
 
 	case httpConn.hasTransport(TransportServerSentEvents) && negotiateResponse.hasTransport(TransportServerSentEvents):
 		req, err := http.NewRequest("GET", reqURL.String(), nil)

@@ -117,7 +117,7 @@ var _ = Describe("HTTP server", func() {
 					port, _ := strconv.Atoi(url.Port())
 					waitForPort(port)
 					// Try first connection
-					conn, err := NewHTTPConnection(context.Background(), fmt.Sprintf("http://127.0.0.1:%v/hub", port))
+					conn, err := NewHTTPConnection(context.Background(), context.Background(), fmt.Sprintf("http://127.0.0.1:%v/hub", port))
 					Expect(err).NotTo(HaveOccurred())
 					client, err := NewClient(ctx,
 						WithConnection(conn),
@@ -133,7 +133,7 @@ var _ = Describe("HTTP server", func() {
 					Expect(result.Value).To(BeEquivalentTo(3))
 
 					// Try second connection
-					conn2, err := NewHTTPConnection(context.Background(), fmt.Sprintf("http://127.0.0.1:%v/hub", port))
+					conn2, err := NewHTTPConnection(context.Background(), context.Background(), fmt.Sprintf("http://127.0.0.1:%v/hub", port))
 					Expect(err).NotTo(HaveOccurred())
 					client2, err := NewClient(ctx,
 						WithConnection(conn2),
@@ -192,7 +192,7 @@ var _ = Describe("HTTP client", func() {
 			port, _ := strconv.Atoi(url.Port())
 			waitForPort(port)
 
-			client, err := NewClient(ctx, WithHttpConnection(ctx, fmt.Sprintf("http://127.0.0.1:%v/hub", port)))
+			client, err := NewClient(ctx, WithHttpConnection(ctx, ctx, fmt.Sprintf("http://127.0.0.1:%v/hub", port)))
 			Expect(err).NotTo(HaveOccurred())
 
 			client.Start()

@@ -40,7 +40,7 @@ func WithConnector(connectionFactory func() (Connection, error)) func(Party) err
 
 // HttpConnectionFactory is a connectionFactory for WithConnector which first tries to create a connection
 // with WebSockets (if it is allowed by the HttpConnection options) and if this fails, falls back to a SSE based connection.
-func HttpConnectionFactory(ctx context.Context, address string, options ...func(*httpConnection) error) (Connection, error) {
+func HttpConnectionFactory(ctx context.Context, connCtx context.Context, address string, options ...func(*httpConnection) error) (Connection, error) {
 	conn := &httpConnection{}
 	for i, option := range options {
 		if err := option(conn); err != nil {
@@ -61,7 +61,7 @@ func HttpConnectionFactory(ctx context.Context, address string, options ...func(
 		// If Websockets are allowed, we try to connect with these
 		if transport == TransportWebSockets {
 			wsOptions := append(options, WithTransports(TransportWebSockets))
-			conn, err := NewHTTPConnection(ctx, address, wsOptions...)
+			conn, err := NewHTTPConnection(ctx, connCtx, address, wsOptions...)
 			// If this is ok, return the conn
 			if err == nil {
 				return conn, err
@@ -73,7 +73,7 @@ func HttpConnectionFactory(ctx context.Context, address string, options ...func(
 		// If SSE is allowed, with fallback to try these
 		if transport == TransportServerSentEvents {
 			sseOptions := append(options, WithTransports(TransportServerSentEvents))
-			return NewHTTPConnection(ctx, address, sseOptions...)
+			return NewHTTPConnection(ctx, connCtx, address, sseOptions...)
 		}
 	}
 	// None of the transports worked
@@ -84,9 +84,9 @@ func HttpConnectionFactory(ctx context.Context, address string, options ...func(
 // with WebSockets (if it is allowed by the HttpConnection options) and if this fails, falls back to a SSE based connection.
 // This strategy is also used for auto reconnect if this option is used.
 // WithHttpConnection is a shortcut for WithConnector(HttpConnectionFactory(...))
-func WithHttpConnection(ctx context.Context, address string, options ...func(*httpConnection) error) func(Party) error {
+func WithHttpConnection(ctx context.Context, connCtx context.Context, address string, options ...func(*httpConnection) error) func(Party) error {
 	return WithConnector(func() (Connection, error) {
-		return HttpConnectionFactory(ctx, address, options...)
+		return HttpConnectionFactory(ctx, connCtx, address, options...)
 	})
 }
 
