@@ -208,11 +208,17 @@ func (l *loop) handleInvocationMessage(invocation invocationMessage) {
 			_ = l.hubConn.Completion(invocation.InvocationID, nil,
 				fmt.Sprintf("Stream invocation of method %s which has not return value kind channel", invocation.Target))
 		} else {
-			result := method.Call(in)
-			l.recoverInvocationPanic(invocation)
-			l.returnInvocationResult(invocation, result)
+			if result, ok := l.invoke(invocation, method, in); ok {
+				l.returnInvocationResult(invocation, result)
+			}
 		}
 	}
+}
+
+// recoverInvocationPanic must be the deferred call itself, otherwise recover returns nil.
+func (l *loop) invoke(invocation invocationMessage, method reflect.Value, in []reflect.Value) (result []reflect.Value, ok bool) {
+	defer l.recoverInvocationPanic(invocation)
+	return method.Call(in), true
 }
 
 func (l *loop) returnInvocationResult(invocation invocationMessage, result []reflect.Value) {
