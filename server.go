@@ -171,7 +171,7 @@ func (s *server) prefixLoggers(connectionID string) (info StructuredLogger, dbg 
 			"class", "Server",
 			"connection", connectionID,
 			"hub", reflect.ValueOf(s.newHub()).Elem().Type()),
-		log.WithPrefix(s.dbg, "ts", log.DefaultTimestampUTC,
+		withDebugPrefix(s.dbg, "ts", log.DefaultTimestampUTC,
 			"class", "Server",
 			"connection", connectionID,
 			"hub", reflect.ValueOf(s.newHub()).Elem().Type())

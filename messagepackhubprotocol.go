@@ -372,7 +372,9 @@ func (m *messagePackHubProtocol) WriteMessage(message interface{}, writer io.Wri
 	if _, err := frameBuf.Write(lenBuf[:lenLen]); err != nil {
 		return err
 	}
-	_ = m.dbg.Log(evt, "Write", msg, fmt.Sprintf("%#v", message))
+	if debugEnabled(m.dbg) {
+		_ = m.dbg.Log(evt, "Write", msg, fmt.Sprintf("%#v", message))
+	}
 	_, _ = frameBuf.ReadFrom(buf)
 	_, err := frameBuf.WriteTo(writer)
 	return err
@@ -397,7 +399,7 @@ func (m *messagePackHubProtocol) transferMode() TransferMode {
 }
 
 func (m *messagePackHubProtocol) setDebugLogger(dbg StructuredLogger) {
-	m.dbg = log.WithPrefix(dbg, "ts", log.DefaultTimestampUTC, "protocol", "MSGP")
+	m.dbg = withDebugPrefix(dbg, "ts", log.DefaultTimestampUTC, "protocol", "MSGP")
 }
 
 // UnmarshalArgument unmarshals raw bytes to a destination value. dst is the pointer to the destination value.

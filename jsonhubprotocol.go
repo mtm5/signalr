@@ -57,9 +57,11 @@ func (j *jsonHubProtocol) UnmarshalArgument(src interface{}, dst interface{}) er
 	if err := json.Unmarshal(rawSrc, dst); err != nil {
 		return &jsonError{string(rawSrc), err}
 	}
-	_ = j.dbg.Log(evt, "UnmarshalArgument",
-		"argument", string(rawSrc),
-		"value", fmt.Sprintf("%v", reflect.ValueOf(dst).Elem()))
+	if debugEnabled(j.dbg) {
+		_ = j.dbg.Log(evt, "UnmarshalArgument",
+			"argument", string(rawSrc),
+			"value", fmt.Sprintf("%v", reflect.ValueOf(dst).Elem()))
+	}
 	return nil
 }
 
@@ -73,7 +75,9 @@ func (j *jsonHubProtocol) ParseMessages(reader io.Reader, remainBuf *bytes.Buffe
 	messages = make([]interface{}, 0)
 	for _, frame := range frames {
 		err = json.Unmarshal(frame, &message)
-		_ = j.dbg.Log(evt, "read", msg, string(frame))
+		if debugEnabled(j.dbg) {
+			_ = j.dbg.Log(evt, "read", msg, string(frame))
+		}
 		if err != nil {
 			return nil, &jsonError{string(frame), err}
 		}
@@ -208,7 +212,9 @@ func (j *jsonHubProtocol) WriteMessage(message interface{}, writer io.Writer) er
 		return err
 	}
 	b = append(b, 0x1e)
-	_ = j.dbg.Log(evt, "write", msg, string(b))
+	if debugEnabled(j.dbg) {
+		_ = j.dbg.Log(evt, "write", msg, string(b))
+	}
 	_, err = writer.Write(b)
 	return err
 }
@@ -218,5 +224,5 @@ func (j *jsonHubProtocol) transferMode() TransferMode {
 }
 
 func (j *jsonHubProtocol) setDebugLogger(dbg StructuredLogger) {
-	j.dbg = log.WithPrefix(dbg, "ts", log.DefaultTimestampUTC, "protocol", "JSON")
+	j.dbg = withDebugPrefix(dbg, "ts", log.DefaultTimestampUTC, "protocol", "JSON")
 }
