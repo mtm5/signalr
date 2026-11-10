@@ -141,7 +141,7 @@ func NewClient(ctx context.Context, options ...func(Party) error) (Client, error
 	info, dbg = c.loggers()
 	c.setLoggers(
 		log.WithPrefix(info, "ts", log.DefaultTimestampUTC),
-		log.WithPrefix(dbg, "ts", log.DefaultTimestampUTC),
+		withDebugPrefix(dbg, "ts", log.DefaultTimestampUTC),
 	)
 	if c.conn == nil && c.connectionFactory == nil {
 		return nil, ErrUnableToConnect
@@ -552,7 +552,7 @@ func (c *client) allowReconnect() bool {
 func (c *client) prefixLoggers(connectionID string) (info StructuredLogger, dbg StructuredLogger) {
 	if c.receiver == nil {
 		return log.WithPrefix(c.info, "ts", log.DefaultTimestampUTC, "class", "Client", "connection", connectionID),
-			log.WithPrefix(c.dbg, "ts", log.DefaultTimestampUTC, "class", "Client", "connection", connectionID)
+			withDebugPrefix(c.dbg, "ts", log.DefaultTimestampUTC, "class", "Client", "connection", connectionID)
 	}
 	var t reflect.Type = nil
 	switch reflect.ValueOf(c.receiver).Kind() {
@@ -565,7 +565,7 @@ func (c *client) prefixLoggers(connectionID string) (info StructuredLogger, dbg 
 			"class", "Client",
 			"connection", connectionID,
 			"hub", t),
-		log.WithPrefix(c.dbg, "ts", log.DefaultTimestampUTC,
+		withDebugPrefix(c.dbg, "ts", log.DefaultTimestampUTC,
 			"class", "Client",
 			"connection", connectionID,
 			"hub", t)
@@ -621,7 +621,9 @@ func (c *client) receiveHandshakeResponse() (hubProtocol, error) {
 				_ = info.Log(evt, "handshake received", "error", response.Error)
 				return nil, errors.New(response.Error)
 			}
-			_ = dbg.Log(evt, "handshake received", "msg", fmtMsg(response))
+			if debugEnabled(dbg) {
+				_ = dbg.Log(evt, "handshake received", "msg", fmtMsg(response))
+			}
 			var protocol hubProtocol
 			switch c.format {
 			case "json":

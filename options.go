@@ -126,6 +126,9 @@ func buildInfoDebugLogger(logger log.Logger, debug bool) (log.Logger, log.Logger
 		logger = level.NewFilter(logger, level.AllowInfo())
 	}
 	infoLogger := &recoverLogger{level.Info(logger)}
+	if !debug {
+		return infoLogger, noDebugLogger{}
+	}
 	debugLogger := log.With(&recoverLogger{level.Debug(logger)}, "caller", log.DefaultCaller)
 	return infoLogger, debugLogger
 }

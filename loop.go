@@ -86,14 +86,18 @@ msgLoop:
 					case invocationMessage:
 						l.handleInvocationMessage(message)
 					case cancelInvocationMessage:
-						_ = l.dbg.Log(evt, msgRecv, msg, fmtMsg(message))
+						if debugEnabled(l.dbg) {
+							_ = l.dbg.Log(evt, msgRecv, msg, fmtMsg(message))
+						}
 						l.streamer.Stop(message.InvocationID)
 					case streamItemMessage:
 						err = l.handleStreamItemMessage(message)
 					case completionMessage:
 						err = l.handleCompletionMessage(message)
 					case closeMessage:
-						_ = l.dbg.Log(evt, msgRecv, msg, fmtMsg(message))
+						if debugEnabled(l.dbg) {
+							_ = l.dbg.Log(evt, msgRecv, msg, fmtMsg(message))
+						}
 						l.closeMessage = &message
 						if message.Error != "" {
 							err = errors.New(message.Error)
@@ -190,7 +194,9 @@ func (l *loop) GetNewID() string {
 }
 
 func (l *loop) handleInvocationMessage(invocation invocationMessage) {
-	_ = l.dbg.Log(evt, msgRecv, msg, fmtMsg(invocation))
+	if debugEnabled(l.dbg) {
+		_ = l.dbg.Log(evt, msgRecv, msg, fmtMsg(invocation))
+	}
 	// Transient hub, dispatch invocation here
 	methodName := l.party.getMethodNameByAlternateName(invocation.Target)
 	if method, ok := getMethod(l.party.invocationTarget(l.hubConn), methodName); !ok {
@@ -249,7 +255,9 @@ func (l *loop) returnInvocationResult(invocation invocationMessage, result []ref
 }
 
 func (l *loop) handleStreamItemMessage(streamItemMessage streamItemMessage) error {
-	_ = l.dbg.Log(evt, msgRecv, msg, fmtMsg(streamItemMessage))
+	if debugEnabled(l.dbg) {
+		_ = l.dbg.Log(evt, msgRecv, msg, fmtMsg(streamItemMessage))
+	}
 	if err := l.streamClient.receiveStreamItem(streamItemMessage); err != nil {
 		switch t := err.(type) {
 		case *hubChanTimeoutError:
@@ -263,7 +271,9 @@ func (l *loop) handleStreamItemMessage(streamItemMessage streamItemMessage) erro
 }
 
 func (l *loop) handleCompletionMessage(message completionMessage) error {
-	_ = l.dbg.Log(evt, msgRecv, msg, fmtMsg(message))
+	if debugEnabled(l.dbg) {
+		_ = l.dbg.Log(evt, msgRecv, msg, fmtMsg(message))
+	}
 	var err error
 	if l.streamClient.handlesInvocationID(message.InvocationID) {
 		err = l.streamClient.receiveCompletionItem(message, l.invokeClient)
@@ -279,7 +289,9 @@ func (l *loop) handleCompletionMessage(message completionMessage) error {
 }
 
 func (l *loop) handleOtherMessage(hubMessage hubMessage) error {
-	_ = l.dbg.Log(evt, msgRecv, msg, fmtMsg(hubMessage))
+	if debugEnabled(l.dbg) {
+		_ = l.dbg.Log(evt, msgRecv, msg, fmtMsg(hubMessage))
+	}
 	// Not Ping
 	if hubMessage.Type != 6 {
 		err := fmt.Errorf("invalid message type %v", hubMessage)
